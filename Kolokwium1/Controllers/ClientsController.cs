@@ -20,7 +20,7 @@ namespace Kolokwium1.Controllers
         {
             try
             {
-                var res = await _dbService.GetRentalsForCustomerByIdAsync(id);
+                var res = await _dbService.GetRentalsForClientByIdAsync(id);
                 return Ok(res);
             }
             catch (NotFoundException e)
@@ -29,7 +29,7 @@ namespace Kolokwium1.Controllers
             }
         }
 
-        [HttpPost("clients/{id}")]
+        [HttpPost("clients")]
         public async Task<IActionResult> AddNewRental(int id, CreateRentalDto createRentalRequest)
         {
 

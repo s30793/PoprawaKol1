@@ -1,6 +1,6 @@
 ﻿namespace Kolokwium1.Models.DTOs;
 
-public class CustomerRentalHistoryDto
+public class ClientsRentalHistoryDto
 {
     public int id { get; set; }
     public string firstname { get; set; }

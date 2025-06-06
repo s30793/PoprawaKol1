@@ -13,7 +13,7 @@ public class DbService : IDbService
         _connectionString = configuration.GetConnectionString("Default") ?? string.Empty;
     }
 
-    public async Task<CustomerRentalHistoryDto> GetRentalsForCustomerByIdAsync(int id)
+    public async Task<ClientsRentalHistoryDto> GetRentalsForClientByIdAsync(int id)
     {
         var query =
             @"SELECT c.id, c.firstName, c.lastName, c.address, ca.vin, 
@@ -34,38 +34,36 @@ public class DbService : IDbService
 
         com.Parameters.AddWithValue("@id", id);
         var reader = await com.ExecuteReaderAsync();
-        CustomerRentalHistoryDto? customerRentalHistoryDto = null;
+        ClientsRentalHistoryDto? customerRentalHistoryDto = null;
 
         while (await reader.ReadAsync())
         {
             if (customerRentalHistoryDto is null)
             {
-                customerRentalHistoryDto = new CustomerRentalHistoryDto
+                customerRentalHistoryDto = new ClientsRentalHistoryDto
                 {
                     id = reader.GetInt32(0),
                     firstname = reader.GetString(1),
                     lastname = reader.GetString(2),
                     address = reader.GetString(3),
-                    rentals = new List<CarsDto>(){
+                    rentals = new List<CarsDto>()
+                    {
                         /*vin = reader.GetString(4),
                         color = reader.GetString(5),
                         model = reader.GetString(6),
                         dateFrom = reader.GetDateTime(7),
                         dateTo = reader.GetDateTime(8),
                         totalPrice = reader.GetDecimal(9)*/
-                        };
-                if         
-                        
-                        
-                        
-                        
+                    },
+                    //  cars = new List<CarsDto>()
                 };
+                if (customerRentalHistoryDto is null)
+                {
+                    throw new NotFoundException("Clients not found");
+                }
             }
-            }
-        
+        }return customerRentalHistoryDto;
     }
-
-
 
     public async Task AddNewRentalAsync(int id, CreateRentalDto rentalRequest)
     {
@@ -82,22 +80,56 @@ public class DbService : IDbService
         try
         {
             com.Parameters.Clear();
-            com.CommandText = @"SELECT 1 FROM clients where id = @id";
+            com.CommandText = @"SELECT 1 FROM clients where id = @ID";
             com.Parameters.AddWithValue("@id", id);
             
             var clientsIDRes  = await com.ExecuteReaderAsync();
-            if (clientsIDRes is not null)
+            if (clientsIDRes is null)
             {
-                throw new NotFoundException("Client does exist");
+                throw new NotFoundException("Client does not exist");
             }
             
             com.Parameters.Clear();
             
-            com.CommandText = "Select 1 from "
-                
-                
-                
-                
+            com.CommandText = "Select 1 from cars where id = @ID";
+            
+            var carsIDRes = await com.ExecuteReaderAsync();
+            if (carsIDRes is null) throw new NotFoundException("Cars does not exist");
+            
+            com.Parameters.Clear();
+            
+            com.CommandText = @"SELECT 1 from car_rentals where id = @ID";
+            
+            var rentalsIDRes = await com.ExecuteReaderAsync();
+            if (rentalsIDRes is null)
+                throw new NotFoundException("Rental does not exist");
+            
+            com.Parameters.Clear();
+            
+            com.CommandText = @"SELECT 1 from models where id = @ID";
+            
+            var modelsIDRes = await com.ExecuteReaderAsync();
+            if (modelsIDRes is null)
+                throw new NotFoundException("Model does not exist");
+            
+            com.Parameters.Clear();
+            
+            com.CommandText = @"SELECT 1 from models where id = @ID";
+            
+            var colorsIDRes = await com.ExecuteReaderAsync();
+            if (colorsIDRes is null)
+                throw new NotFoundException("Color does not exist");
+            
+            com.Parameters.Clear();
+
+
+            com.CommandText = @"Insert into cars_rental 
+                Values(@ID, @ClientID, @CarID )";
+            com.Parameters.AddWithValue("@ID", rentalsIDRes);
+            com.Parameters.AddWithValue("@ClientID", clientsIDRes);
+            com.Parameters.AddWithValue("@CarID", carsIDRes);
+            
+            
             try
             {
                 await com.ExecuteNonQueryAsync();
@@ -106,7 +138,6 @@ public class DbService : IDbService
             {
                 throw new ConflictException("A rental already exists.");
             }
-            
             
             await transaction.CommitAsync();
         }
